@@ -1,5 +1,6 @@
-package com.mail.MailTool.dto;
+package com.mail.MailTool.dto.mail;
 
+import com.mail.MailTool.model.MailContent;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,9 +11,9 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CombinedMailRequestDto {
+public class BulkMailRequestDto {
 
-    private EmailContent emailContent;
+    private MailContent emailContent;
     private LocalDateTime scheduledMailDateTime;
     private boolean isScheduledMails;
     private String platform;

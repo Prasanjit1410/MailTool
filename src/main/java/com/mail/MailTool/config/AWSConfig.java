@@ -3,6 +3,8 @@ package com.mail.MailTool.config;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
 import com.mail.MailTool.util.ses.SESClientBuilder;
@@ -34,12 +36,21 @@ public class AWSConfig {
         SESClientBuilder clientBuilder = new SESClientBuilder(displayName, fromEmail, region, accessKey, secretKey);
         return clientBuilder;
     }
-
     @Bean
-    public AmazonSimpleEmailService getSESClient() {
-        return AmazonSimpleEmailServiceClientBuilder.standard()
+    public AmazonSimpleEmailService credentials() {
+        AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder.standard()
                 .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
                 .withRegion(region).build();
+        return client;
+    }
+
+    @Bean
+    public AmazonS3 s3client() {
+        AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
+                .withRegion(region)
+                .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey,secretKey)))
+                .build();
+        return s3Client;
     }
 
 }

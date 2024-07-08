@@ -6,7 +6,6 @@ import com.amazonaws.services.simpleemail.model.Body;
 import com.amazonaws.services.simpleemail.model.Content;
 import com.amazonaws.services.simpleemail.model.Destination;
 import com.amazonaws.services.simpleemail.model.Message;
-import com.mail.MailTool.model.SESMailMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

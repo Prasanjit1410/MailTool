@@ -8,7 +8,6 @@ import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
 import com.amazonaws.services.simpleemail.model.SendEmailRequest;
 import com.amazonaws.services.simpleemail.model.SendRawEmailRequest;
-import com.mail.MailTool.model.SESMailMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

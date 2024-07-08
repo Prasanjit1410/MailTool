@@ -3,7 +3,6 @@ package com.mail.MailTool.util.ses;
 import com.amazonaws.services.simpleemail.model.RawMessage;
 import com.amazonaws.services.simpleemail.model.SendEmailRequest;
 import com.amazonaws.services.simpleemail.model.SendRawEmailRequest;
-import com.mail.MailTool.model.SESMailMessage;
 
 import javax.mail.MessagingException;
 import javax.mail.Session;
