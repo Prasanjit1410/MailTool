@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SearchBulkMailsCriteria {
     private String campaignId;
-    private String partnerId;
     private String startDate;
     private String endDate;
     private String uId;

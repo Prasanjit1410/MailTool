@@ -1,5 +1,6 @@
 package com.mail.MailTool.controller;
 
+import com.mail.MailTool.constant.SearchProfile;
 import com.mail.MailTool.dto.mail.BulkMailRequestDto;
 import com.mail.MailTool.service.MailService;
 import com.mail.MailTool.util.CommonUtils;
@@ -31,14 +32,24 @@ public class MailController {
         return mailService.cancelScheduledBulkMailRequest(campaignId);
     }
 
-    @GetMapping("api/v1/mails/campaigns")
-    public ResponseEntity<?> getCampaigns(
-            @RequestParam(name = "campaignId", defaultValue = "NA") String campaignId,
-            @RequestParam(name = "partnerId", defaultValue = "NA", required = true) String partnerId,
-            @RequestParam(name = "startDate", defaultValue = "NA") String startDate,
-            @RequestParam(name = "endDate", defaultValue = "NA") String endDate) {
-        return new ResponseEntity<>(mailService.filterCampaigns(campaignId, partnerId, startDate, endDate), HttpStatus.OK);
-
+    @GetMapping("api/v1/mails/bulk/search")
+    public ResponseEntity<?> searchBulkMails(
+            @RequestParam(defaultValue = "NA", required = false) String campaignId,
+            @RequestParam(defaultValue = "NA", required = false) String startDate,
+            @RequestParam(defaultValue = "NA", required = false) String endDate,
+            @RequestParam(defaultValue = "NA", required = false) String uId,
+            @RequestParam(defaultValue = "NA", required = false) String platform,
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "sentDt.desc") String order,
+            @RequestParam(defaultValue = "BASIC", required = false) SearchProfile profile,
+            @RequestParam(defaultValue = "false", required = false) boolean isScheduled,
+            @RequestParam(defaultValue = "false", required = false) boolean isMailSent,
+            @RequestParam(defaultValue = "false", required = false) boolean isCancelled,
+            HttpServletRequest request) {
+        return mailService.searchBulkMails(campaignId, startDate, endDate, uId, platform,
+                offset, limit, order, profile, commonUtils.setUser(request), isMailSent, isScheduled, isCancelled);
     }
+
 
 }

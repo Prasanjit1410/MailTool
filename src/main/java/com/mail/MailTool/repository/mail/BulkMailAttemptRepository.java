@@ -14,7 +14,5 @@ public interface BulkMailAttemptRepository extends JpaRepository<BulkMailAttempt
 
     List<BulkMailAttempt> findAllByCampaignId(String campaignId);
 
-    List<BulkMailAttempt> findByPartnerId(String partnerId);
-
     BulkMailAttempt findByCampaignId(String campaignId);
 }

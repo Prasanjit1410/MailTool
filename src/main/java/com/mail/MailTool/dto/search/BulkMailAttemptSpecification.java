@@ -2,15 +2,16 @@ package com.mail.MailTool.dto.search;
 import com.mail.MailTool.custom.specification.SearchBulkMailsCriteria;
 import com.mail.MailTool.domain.mail.BulkMailAttempt;
 import com.mail.MailTool.repository.mail.BulkMailAttemptRepository;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -30,14 +31,11 @@ public  class BulkMailAttemptSpecification implements Specification<BulkMailAtte
     }
 
     @Override
-    public Predicate toPredicate(Root<BulkMailAttempt> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
+    public jakarta.persistence.criteria.Predicate toPredicate(Root<BulkMailAttempt> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
         List<Predicate> predicates = new ArrayList<>();
 
         if (!"NA".equalsIgnoreCase(searchCriteria.getCampaignId())) {
             predicates.add(criteriaBuilder.equal(root.get("campaignId"), searchCriteria.getCampaignId()));
-        }
-        if (!"NA".equalsIgnoreCase(searchCriteria.getPartnerId())) {
-            predicates.add(criteriaBuilder.equal(root.get("partnerId"), searchCriteria.getPartnerId()));
         }
         if (!"NA".equalsIgnoreCase(searchCriteria.getStartDate())) {
             String formattedDate = searchCriteria.getStartDate().replaceAll("\\s+", "").replace('/', '-').replaceAll("(?<=\\b|\\D)(\\d)(?=\\b|\\D)", "0$1");
@@ -89,4 +87,6 @@ public  class BulkMailAttemptSpecification implements Specification<BulkMailAtte
         Predicate[] predicateArr = new Predicate[predicates.size()];
         return criteriaBuilder.and(predicates.toArray(predicateArr));
     }
+
+
 }

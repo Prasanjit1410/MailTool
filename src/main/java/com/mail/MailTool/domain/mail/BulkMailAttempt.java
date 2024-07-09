@@ -36,7 +36,7 @@ public class BulkMailAttempt {
     private String recipientListBcc;
 
     @Column(name = "sent_dt")
-    private LocalDateTime sentDt;
+    private Date sentDt;
 
     @Column(name = "mail_category_id")
     private Long mailCategoryId;
@@ -56,9 +56,6 @@ public class BulkMailAttempt {
     @Lob
     @Column(name = "mail_content", nullable = false)
     private String mailContent;
-
-    @Column(name = "partner_id")
-    private String partnerId;
 
     @Column(name = "createdby", length = 100)
     private String createdby;

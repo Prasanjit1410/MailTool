@@ -68,8 +68,6 @@ public class BulkMailAttempt {
     @Column(name = "mail_content", nullable = false)
     private String mailContent;
 
-    @Column(name = "partner_id")
-    private String partnerId;
 
     @Column(name = "createdby", length = 100)
     private String createdby;
@@ -99,7 +97,7 @@ public class BulkMailAttempt {
     @Column(name = "is_scheduled_mail_cancelled",columnDefinition = "boolean default false")
     private boolean isScheduledMailCancelled;
 
-    @Transient
-    private SentMailStats sentMailStatsDetails;
+//    @Transient
+//    private SentMailStats sentMailStatsDetails;
 }
 

@@ -78,8 +78,7 @@ public class SendMessageUtils {
     @Autowired
     SentMailStatsRepository sentMailStatsRepository;
 
-    @Autowired
-    PartnerMailLimitRepository partnerMailLimitRepository;
+
     @Autowired
     BulkMailAttemptRepository bulkMailAttemptRepository;
 
@@ -360,15 +359,6 @@ public class SendMessageUtils {
                 sentMailStats.setSentEmailNumb(emailSuccessfullySent.size());
                 sentMailStats.setBlockedEmailNumb(blockedEmail.size());
                 sentMailStatsRepository.save(sentMailStats);
-
-                if(customerDetails.containsKey("partnerId")){
-                    Optional<PartnerMailLimit> partnerMailLimit = partnerMailLimitRepository.findByPartnerId(customerDetails.get("partnerId"));
-                    if(partnerMailLimit.isPresent()){
-                        PartnerMailLimit mailLimit = partnerMailLimit.get();
-                        mailLimit.setConsumed(mailLimit.getConsumed()+emailSuccessfullySent.size());
-                        partnerMailLimitRepository.save(mailLimit);
-                    }
-                }
             }
             catch (Exception ex){
                 log.error("Exception while saving mail stats ::: {}", ex);

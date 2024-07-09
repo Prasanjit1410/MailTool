@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -14,7 +15,7 @@ import java.util.List;
 public class BulkMailRequestDto {
 
     private MailContent emailContent;
-    private LocalDateTime scheduledMailDateTime;
+    private Date scheduledMailDateTime;
     private boolean isScheduledMails;
     private String platform;
     private List<String> attachmentPaths;
