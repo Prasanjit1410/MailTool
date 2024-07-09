@@ -2,7 +2,8 @@ package com.mail.MailTool.model;
 
 
 
-import jakarta.persistence.*;
+
+import com.mail.MailTool.domain.mail.SentMailStats;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -18,9 +19,6 @@ import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
-import javax.persistence.*;
-import java.time.LocalDateTime;
 import java.util.Date;
 
 
@@ -29,7 +27,7 @@ import java.util.Date;
 @Setter
 @ToString
 @Table(name="bulk_mail_attempt")
-public class BulkMailAttempt {
+public class BulkMailattempt {
 
     @Id
     @Column(name = "sent_mail_id", nullable = false)
@@ -47,7 +45,7 @@ public class BulkMailAttempt {
     private String recipientListBcc;
 
     @Column(name = "sent_dt")
-    private LocalDateTime sentDt;
+    private Date sentDt;
 
     @Column(name = "mail_category_id")
     private Long mailCategoryId;
@@ -97,7 +95,7 @@ public class BulkMailAttempt {
     @Column(name = "is_scheduled_mail_cancelled",columnDefinition = "boolean default false")
     private boolean isScheduledMailCancelled;
 
-//    @Transient
-//    private SentMailStats sentMailStatsDetails;
+   @Transient
+    private SentMailStats sentMailStatsDetails;
 }
 

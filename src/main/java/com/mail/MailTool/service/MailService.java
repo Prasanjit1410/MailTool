@@ -11,6 +11,12 @@ import com.mail.MailTool.util.InternityUser;
 import com.mail.MailTool.util.SendMessageUtils;
 import com.mail.MailTool.util.drill.ResponseUtil;
 import com.mail.MailTool.util.drill.SendCustomMailUtils;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
@@ -22,6 +28,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.time.Instant;
@@ -29,20 +36,14 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+
 import com.mail.MailTool.constant.SearchProfile;
 
 @Service
 @Log4j2
 public class MailService {
 
-    @Value("${}")
-    String mainFileName;
+
 
     @Autowired
     SendCustomMailUtils sendCustomMailUtils;
@@ -76,8 +77,11 @@ public class MailService {
         this.entityManager = entityManager;
     }
 
+
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final Map<String, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
+
+
 
     public ResponseEntity<?> sendBulkMailV1(BulkMailRequestDto payload, String uId, InternityUser internityUser) {
         try {
@@ -111,7 +115,7 @@ public class MailService {
             emailContent.setHeaderIdName("BULK-CAMPAIGN-ID");
             emailContent.setHeaderIdValue(campaignId);
             log.info("emailContent after changes: {}", emailContent);
-
+            log.info("isScheduledMails: {}",payload.isScheduledMails());
             if (payload.isScheduledMails()) {
                 log.info("This is a scheduled bulk mail request");
                 long initialDelay = calculateInitialDelay(payload.getScheduledMailDateTime());
@@ -121,6 +125,8 @@ public class MailService {
                 log.info("Bulk mail scheduled successfully");
                 return new ResponseEntity<>(responseUtil.successResponse("Bulk mail scheduled successfully", bulkMailAttempt), HttpStatus.OK);
             }
+
+
             log.info("This is a non-scheduled bulk mail request");
             sendBulkMail(emailContent, payload.getAttachmentPaths());
 

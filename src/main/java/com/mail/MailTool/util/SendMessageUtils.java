@@ -1,7 +1,7 @@
 package com.mail.MailTool.util;
 
 
-import javax.mail.MessagingException;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.*;
@@ -9,34 +9,32 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import javax.mail.Session;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
-import javax.mail.util.ByteArrayDataSource;
-import javax.mail.Message.RecipientType;
-
-
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.simpleemail.model.SendRawEmailRequest;
 import com.amazonaws.services.simpleemail.model.SendRawEmailResult;
 import com.mail.MailTool.domain.mail.*;
 import com.mail.MailTool.repository.mail.*;
+import jakarta.activation.DataHandler;
+import jakarta.activation.DataSource;
+import jakarta.activation.FileDataSource;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Session;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeBodyPart;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMultipart;
+import jakarta.mail.util.ByteArrayDataSource;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 
 import com.amazonaws.services.simpleemail.model.RawMessage;
 
-import javax.activation.DataHandler;
-import javax.activation.DataSource;
-import javax.activation.FileDataSource;
+
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -60,8 +58,7 @@ public class SendMessageUtils {
     @Autowired
     private TemplateEngine templateEngine;
 
-    @Autowired
-    private JavaMailSender javaMailSender;
+
 
     @Autowired
     UnsubscribedMailRepository unsubscribedMailsRepository;
@@ -82,20 +79,17 @@ public class SendMessageUtils {
     @Autowired
     BulkMailAttemptRepository bulkMailAttemptRepository;
 
-    @Value("${FROM_EMAIL:no-reply@wuelev8.tech}")
+    @Value("${FROM_EMAIL:no-reply@bookmyjet.co.in}")
     private String fromEmail;
 
-    @Value("${DISPLAY_NAME:Where U Elevate Team}")
+    @Value("${DISPLAY_NAME:Bookmyjet Team}")
     private String displayName;
 
-    @Value("${REPLYTO_EMAIL:care@wuelev8.tech}")
+    @Value("${REPLYTO_EMAIL:care@bookmyjet.co.in}")
     private String replyToEmail;
 
     @Value("${domain.url:}")
     private String domainUrl;
-
-    @Value("${bucket}")
-    private String bucket;
 
     @Value("${config_set:configset}")
     private String configSet;
@@ -161,13 +155,13 @@ public class SendMessageUtils {
             if (emailContent.getCc() != null) {
                 String cc = emailContent.getCc().toString();
                 if (isValidEmail(cc)) {
-                    message.setRecipients(RecipientType.CC, InternetAddress.parse(cc));
+                    message.setRecipients(MimeMessage.RecipientType.CC, InternetAddress.parse(cc));
                 }
             }
             if (emailContent.getBcc() != null) {
                 String bcc = emailContent.getBcc().toString();
                 if (isValidEmail(bcc)) {
-                    message.setRecipients(RecipientType.BCC, InternetAddress.parse(bcc));
+                    message.setRecipients(MimeMessage.RecipientType.BCC, InternetAddress.parse(bcc));
                 }
             }
 
@@ -301,7 +295,7 @@ public class SendMessageUtils {
                                 String key = parts[parts.length - 1];
                                 log.info("key ::: {}", key);
                                 S3Object s3Object = awsConfig.s3client().getObject(new GetObjectRequest(bucketName, key));
-                                attachment = new ByteArrayDataSource(s3Object.getObjectContent(), s3Object.getObjectMetadata().getContentType());
+                                attachment = (DataSource) new ByteArrayDataSource(s3Object.getObjectContent(), s3Object.getObjectMetadata().getContentType());
                                 fileName = parts[parts.length - 1];
                             } else {
                                 log.info("local link");
@@ -317,16 +311,16 @@ public class SendMessageUtils {
                     message.setContent(multipart);
 
                     if (emailContent.getCc() != null && isValidEmail(emailContent.getCc().toString())) {
-                        message.setRecipients(RecipientType.CC, InternetAddress.parse(emailContent.getCc().toString()));
+                        message.setRecipients(MimeMessage.RecipientType.CC, InternetAddress.parse(emailContent.getCc().toString()));
                     }
 
                     if (emailContent.getBcc() != null && isValidEmail(emailContent.getBcc().toString())) {
-                        message.setRecipients(RecipientType.BCC, InternetAddress.parse(emailContent.getBcc().toString()));
+                        message.setRecipients(MimeMessage.RecipientType.BCC, InternetAddress.parse(emailContent.getBcc().toString()));
                     }
 
                     message.setFrom(new InternetAddress(senderEmail, senderDisplayName));
-                    message.setReplyTo(new javax.mail.Address[]{
-                            new javax.mail.internet.InternetAddress(senderReplyToEmail)
+                    message.setReplyTo(new jakarta.mail.Address[]{
+                            new jakarta.mail.internet.InternetAddress(senderReplyToEmail)
                     });
 
                     try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {

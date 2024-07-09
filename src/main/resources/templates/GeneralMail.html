@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BookMyJet</title>
+    <style>
+        body{
+         font-family: Arial, Helvetica, sans-serif;
+             color: #4A4A4A;
+        }
+
+    </style>
+</head>
+<body style="margin:0;padding:0;">
+<table role="presentation" style="width:100%;border-collapse:collapse;border:0;border-spacing:0;background:#ffffff;">
+    <tr>
+        <td align="center" style="padding:0;">
+            <table role="presentation" style="border-collapse:collapse;border-spacing:0;text-align:left;">
+                <tr>
+                    <td align="center" style="background-image: url(https://bmj-user-bucket.s3-ap-south-1.amazonaws.com/profile/123_bmj_mail.png);background-repeat: no-repeat;background-position: center;background-size: cover;height: 310px;width:100vw;">
+                        <img src="https://bmjcdncontent.s3.ap-south-1.amazonaws.com/bmj_logo.png" alt="" width="200" style="height:auto;display:block;" />
+                    </td>
+
+                </tr>
+
+                <tr>
+                    <td>
+                        <table role="presentation" style="width:80%;margin: auto;border-collapse:collapse;border:0;border-spacing:0;">
+
+                            <tr>
+                                <td style="padding:40px 0 0px 0;">
+                                    <p style="margin: 0" th:utext="${content.getMessage()}"></p>
+                                </td>
+                            </tr>
+                            <tr style="margin: auto;">
+                                <td style="border-bottom: 1px solid #808080;padding-top: 30px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:0;">
+                                    <table role="presentation" style="width:100%;border-collapse:collapse;border:0;border-spacing:0;">
+                                        <tr>
+                                            <td style="margin:auto;text-align: center;padding-top:20px;padding-bottom:20px;">
+                                                <a
+                                                        href="mailto:connect@bookmyjet.co.in"
+                                                        style="
+                                border-radius: 30px;
+                                background: #fff;
+                                border: 1px solid #4A4A4A;
+                                padding: 5px 14px;
+                                font-size: 16px;
+                                font-style: normal;
+                                font-weight: 400;
+                                line-height: 150%;
+                                letter-spacing: 0.8px;
+                                margin-left: 20px;
+                                color: #4a4a4a;
+                                display: inline-block;
+                                margin-bottom: 10px;
+                                text-decoration: none;
+                              "
+                                                >
+                                                    <img src="https://bmj-user-bucket.s3-ap-south-1.amazonaws.com/profile/123_mail-outlined-icon.png" alt="mail-us" style="vertical-align: middle;">
+                                                    <span style="vertical-align: middle; margin-left: 5px;">Mail Us</span>
+
+                                                </a>
+                                                <a
+                                                        href="tel:+919319806966"
+                                                        style="
+                                border-radius: 30px;
+                                background: #fff;
+                                border: 1px solid #4A4A4A;
+                                padding: 5px 14px;
+                                font-size: 16px;
+                                font-style: normal;
+                                font-weight: 400;
+                                line-height: 150%;
+                                letter-spacing: 0.8px;
+                                margin-left: 20px;
+                                color: #4a4a4a;
+                                display: inline-block;
+                                margin-bottom: 10px;
+                                text-decoration: none;
+                              "
+                                                >
+                                                    <img src="https://bmj-user-bucket.s3-ap-south-1.amazonaws.com/profile/123_mobile-outlined-icon.png" alt="call-us" style="vertical-align: middle;">
+                                                    <span style="vertical-align: middle; margin-left: 5px;">Call Us</span>
+
+                                                </a>
+                                                <a
+                                                        href="https://wa.me/+919319806966"
+                                                        target="_blank"
+                                                        style="
+                                border-radius: 30px;
+                                background: #fff;
+                                border: 1px solid #4A4A4A;
+                                padding: 5px 14px;
+                                font-size: 16px;
+                                font-style: normal;
+                                font-weight: 400;
+                                line-height: 150%;
+                                letter-spacing: 0.8px;
+                                margin-left: 20px;
+                                color: #4a4a4a;
+                                display: inline-block;
+                                margin-bottom: 10px;
+                                text-decoration: none;
+                              "
+                                                >
+                                                    <img src="https://bmj-user-bucket.s3-ap-south-1.amazonaws.com/profile/123_whatsapp-outlined-icon.png" alt="chat-with-us" style="vertical-align: middle;">
+                                                    <span style="vertical-align: middle; margin-left: 5px;">Chat with Us</span>
+                                                </a>
+                                            </td>
+
+
+                                        </tr>
+                                        <tr>
+                                            <td style="margin:auto;text-align: center;padding-bottom: 20px;">
+                                                <a href="https://www.facebook.com/profile.php?id=61554439882898" target="_blank" style="margin: 0 8px;text-decoration: none;">
+                                                    <img
+                                                            src="https://bmj-user-bucket.s3-ap-south-1.amazonaws.com/profile/123_facebook-outlined-icon.png"
+                                                            alt="facebook"
+
+                                                    />
+                                                </a>
+
+                                                <a href="https://twitter.com/BookMy_Jet" target="_blank" style="margin: 0 8px;text-decoration: none;">
+                                                    <img
+                                                            src="https://bmj-user-bucket.s3-ap-south-1.amazonaws.com/profile/123_twitterX-outlined-icon.png"
+                                                            alt="TwitterX"
+
+                                                    />
+                                                </a>
+                                                <a href="https://www.linkedin.com/company/bookmyjet/" target="_blank" style="margin: 0 8px;text-decoration: none;">
+                                                    <img
+                                                            src="https://bmj-user-bucket.s3-ap-south-1.amazonaws.com/profile/123_linked-outlined-icon.png"
+                                                            alt="Linkedin"
+
+                                                    />
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="margin:auto;text-align: center;">
+                                                <span>&copy; Copyright 2024</span>
+                                                <br />
+                                                <br />
+                                                <span>BookMyJet, a venture of Foresee Aviation Pvt Ltd</span>
+                                                <br />
+                                                <br />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

@@ -4,12 +4,12 @@ import com.mail.MailTool.constant.SearchProfile;
 import com.mail.MailTool.dto.mail.BulkMailRequestDto;
 import com.mail.MailTool.service.MailService;
 import com.mail.MailTool.util.CommonUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
+
 
 @RestController
 @RequestMapping("/")
@@ -32,7 +32,7 @@ public class MailController {
         return mailService.cancelScheduledBulkMailRequest(campaignId);
     }
 
-    @GetMapping("api/v1/mails/bulk/search")
+    @GetMapping("/api/v1/mails/bulk/search")
     public ResponseEntity<?> searchBulkMails(
             @RequestParam(defaultValue = "NA", required = false) String campaignId,
             @RequestParam(defaultValue = "NA", required = false) String startDate,
