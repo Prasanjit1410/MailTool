@@ -17,8 +17,17 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +36,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.time.Instant;
 
@@ -35,6 +48,7 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import com.mail.MailTool.constant.SearchProfile;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Log4j2
@@ -282,5 +296,101 @@ public class MailService {
             log.error("Exception while adding mail status {}", e);
         }
         return null;
+    }
+    public Map<String, ?> readFile(MultipartFile file, String colWithEmails) {
+        if (file.getOriginalFilename().contains(".csv")) {
+            return readFromCsv(file, colWithEmails);
+        } else if (file.getOriginalFilename().contains(".xls")) {
+            return readFromExcel(file, colWithEmails);
+        } else {
+            Map<String, String> err = new HashMap<>();
+            err.put("ERROR", "Please upload either CSV or Excel file");
+            return err;
+        }
+    }
+    private Map<String, List<String>> readFromCsv(MultipartFile file, String colWithEmails) {
+        try {
+            Map<String, List<String>> result = new HashMap<>();
+            List<String> listOfEmailId = new ArrayList<>();
+
+            EmailValidator validator = EmailValidator.getInstance();
+            Reader reader = new InputStreamReader(file.getInputStream());
+            CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT);
+            List<CSVRecord> list = parser.getRecords();
+            SortedSet<String> sortedEmailSet = new TreeSet<>();
+            Set<String> junkEmails = new HashSet<>();
+            for (CSVRecord record : list) {
+                String[] arr = new String[record.size()];
+                int i = 0;
+                for (String email : record) {
+                    if (validator.isValid(email)) {
+                        listOfEmailId.add(email);
+                    }
+                }
+            }
+            parser.close();
+            result.put("EMAILS", listOfEmailId);
+            return result;
+        } catch (Exception e) {
+            log.error("Exception while reading from the csv file {}", e);
+        }
+        return Collections.EMPTY_MAP;
+    }
+    private Map<String, List<String>> readFromExcel(MultipartFile file, String colWithEmails) {
+        try {
+            Map<String, List<String>> result = new HashMap<>();
+            List<String> listOfEmailId = new ArrayList<>();
+
+            EmailValidator validator = EmailValidator.getInstance();
+            String fileName = file.getOriginalFilename();
+            Workbook wb = null;
+            if (fileName.substring(fileName.indexOf('.')).equals("xls")) {
+                wb = new HSSFWorkbook(file.getInputStream());
+            } else {
+                wb = new XSSFWorkbook(file.getInputStream());
+            }
+            Sheet sheet = wb.getSheetAt(0);
+            if (sheet.getPhysicalNumberOfRows() != 0) {
+                for (int i = 0; i < sheet.getLastRowNum(); i++) {
+                    Row row = sheet.getRow(i);
+                    String cellVal = getCellValue(row.getCell(0));
+                    if (validator.isValid(cellVal)) {
+                        listOfEmailId.add(cellVal);
+                    }
+                }
+            }
+            result.put("EMAILS", listOfEmailId);
+            return result;
+        } catch (Exception e) {
+            log.error("exception {}", e);
+        }
+        return Collections.EMPTY_MAP;
+    }
+    private String getCellValue(Cell cell) {
+        try {
+            return cell.getStringCellValue();
+        } catch (Exception e) {
+            log.error("Exception while fetching the cell value ::: {}", e);
+            return "";
+        }
+    }
+    public Object addUnsubscribedMail(UnsubscribedMails unsubscribedMail) {
+        try {
+            String emailId = unsubscribedMail.getEmailId();
+            String decodedEmailId = new String(Base64.getDecoder().decode(emailId), StandardCharsets.UTF_8);
+            Optional<UnsubscribedMails> mailObj = unsubscribedMailRepository.findByEmailId(decodedEmailId);
+            if (mailObj.isPresent()) {
+                log.error("Email ID {} has already been unsubscribed.", decodedEmailId);
+                return new ResponseEntity<>(commonUtils.message(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Email ID has already been unsubscribed to support@wuelev8.tech"), HttpStatus.INTERNAL_SERVER_ERROR);
+            } else {
+                unsubscribedMail.setEmailId(decodedEmailId);
+                return unsubscribedMailRepository.save(unsubscribedMail);
+            }
+        } catch (Exception e) {
+            log.error("Error occurred while adding unsubscribed mail: {}", e);
+            return new ResponseEntity<>(commonUtils.message(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Exception while adding the unsubscribed mail"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
