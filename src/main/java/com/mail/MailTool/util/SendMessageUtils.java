@@ -203,7 +203,11 @@ public class SendMessageUtils {
                                 log.info("parts ::: {}", (Object) parts);
                                 String bucketName = parts[2].substring(0, parts[2].indexOf(".s3"));
                                 log.info("bucket name ::: {}", bucketName);
-                                String key = parts[parts.length - 1];
+
+                                String key = getS3Key(parts);
+
+
+
                                 log.info("key ::: {}", key);
                                 S3Object s3Object = awsConfig.s3client().getObject(new GetObjectRequest(bucketName, key));
                                 attachment = (DataSource) new ByteArrayDataSource(s3Object.getObjectContent(), s3Object.getObjectMetadata().getContentType());
@@ -294,6 +298,30 @@ public class SendMessageUtils {
             log.error("Exception while replacing template with inline css ::: {}", e);
         }
         return process;
+    }
+    private String getS3Key(String[] parts ){
+        int index=0;
+        for(int i=0;i<parts.length;i++){
+            if(parts[i].endsWith("amazonaws.com")){
+                index=i;
+
+            }
+
+        }
+        if(index== parts.length-2){
+            return parts[parts.length-1];
+        }
+        String key="";
+        for(int i=index+1;i<parts.length;i++){
+
+            if(i!=parts.length-1){
+               key+= parts[i]+"/";
+            }
+            else{
+                key+=parts[i];
+            }
+        }
+        return key;
     }
     private void setSocialLinks(MailContent emailContent, JSONObject socialLinks) {
         try {

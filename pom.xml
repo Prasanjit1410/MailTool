@@ -194,6 +194,12 @@
 			<version>1.4</version>
 		</dependency>
 		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3</artifactId>
+			<version>2.17.79</version> <!-- Update version as per the latest available -->
+		</dependency>
+
+		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>
 			<version>5.0.0</version>

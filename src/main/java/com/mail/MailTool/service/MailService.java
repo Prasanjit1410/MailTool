@@ -1,5 +1,8 @@
 package com.mail.MailTool.service;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.mail.MailTool.config.AWSConfig;
 import com.mail.MailTool.custom.specification.SearchBulkMailsCriteria;
 import com.mail.MailTool.domain.mail.*;
 import com.mail.MailTool.dto.mail.BulkMailRequestDto;
@@ -11,11 +14,6 @@ import com.mail.MailTool.util.InternityUser;
 import com.mail.MailTool.util.SendMessageUtils;
 import com.mail.MailTool.util.drill.ResponseUtil;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.TypedQuery;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -29,6 +27,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,8 +36,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.time.Instant;
@@ -50,13 +48,15 @@ import java.util.stream.Collectors;
 import com.mail.MailTool.constant.SearchProfile;
 import org.springframework.web.multipart.MultipartFile;
 
+
 @Service
 @Log4j2
 public class MailService {
 
 
 
-
+    @Autowired
+    AWSConfig awsConfig;
 
     @Autowired
     SendMessageUtils messageUtils;
@@ -78,6 +78,11 @@ public class MailService {
 
     @Autowired
     ResponseUtil responseUtil;
+
+    @Value("${bucket}")
+    private String bucketName;
+    @Autowired
+    AmazonS3 s3Client;
 
     EmailValidator emailValidator = EmailValidator.getInstance();
 
@@ -182,38 +187,7 @@ public class MailService {
         }
     }
 
-//    public Map<String, Object> filterCampaigns(String campaignId, String startDate, String endDate) {
-//        try {
-//            Map<String, Object> response = new HashMap<>();
-//            List<BulkMailAttempt> campaigns;
-//
-//            if (campaignId.equals("NA") && startDate.equals("NA") && endDate.equals("NA")) {
-//                log.info("Filtering campaigns - No filtering parameters provided. Returning all campaigns.");
-//                campaigns = bulkMailAttemptRepository.findAll();
-//            } else if (!campaignId.equals("NA") && startDate.equals("NA") && endDate.equals("NA")) {
-//                log.info("Filtering campaigns - Campaign ID: {}", campaignId);
-//                campaigns = bulkMailAttemptRepository.findAllByCampaignId(campaignId);
-//            } else if (!startDate.equals("NA") && !endDate.equals("NA")) {
-//                log.info("Filtering campaigns - Start Date: {}, End Date: {}", startDate, endDate);
-//                campaigns = filterByDate(startDate, endDate);
-//            } else {
-//                log.error("Invalid parameters provided.");
-//                throw new IllegalArgumentException("Invalid parameters provided.");
-//            }
-//
-//            List<BulkMailAttempt> campaignListParent = campaigns.stream().distinct().collect(Collectors.toList());
-//            List<BulkMailAttempt> campaignList = setCountOfSuccessfulMailsSent(campaignListParent);
-//            List<MailStatus> allCampaign = mailStatusRepository.findAll();
-//
-//            response.put("totalRecords", campaignList.size());
-//            response.put("data", campaignList);
-//            response.put("AllList", allCampaign);
-//            return response;
-//        } catch (Exception e) {
-//            log.error("Exception while filtering campaigns: {}", e);
-//            return null;
-//        }
-//    }
+
     public ResponseEntity<?> searchBulkMails(String campaignId, String startDate, String endDate, String uId, String platform, int offset, int limit, String order, SearchProfile profile, InternityUser internityUser, boolean isMailSent, boolean isScheduled, boolean isCancelled) {
         try {
             log.info("Searching bulk mails with campaignId: {}, startDate: {}, endDate: {}, uId: {}, platform: {}, offset: {}, limit: {}, order: {}, profile: {}",
@@ -240,23 +214,6 @@ public class MailService {
         }
     }
 
-
-    private List<BulkMailAttempt> filterByDate(String startDate, String endDate) {
-        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-        CriteriaQuery<BulkMailAttempt> query = criteriaBuilder.createQuery(BulkMailAttempt.class);
-        Root<BulkMailAttempt> root = query.from(BulkMailAttempt.class);
-
-        Predicate startDatePredicate = criteriaBuilder.greaterThanOrEqualTo(root.get("sentDt"), startDate);
-        Predicate endDatePredicate = criteriaBuilder.lessThanOrEqualTo(root.get("sentDt"), endDate);
-        Predicate finalPredicate = criteriaBuilder.and(startDatePredicate, endDatePredicate);
-
-        query.where(finalPredicate);
-
-        TypedQuery<BulkMailAttempt> typedQuery = entityManager.createQuery(query);
-        List<BulkMailAttempt> filteredAttempts = typedQuery.getResultList();
-        log.info("Filtered {} campaigns by date.", filteredAttempts.size());
-        return filteredAttempts;
-    }
 
     private List<BulkMailAttempt> setCountOfSuccessfulMailsSent(List<BulkMailAttempt> campaignListParent) {
         try {
@@ -289,26 +246,40 @@ public class MailService {
             return campaignListParent; // Consider what to return in case of exception
         }
     }
-    public MailStatus saveMailStatus(MailStatus mailStatus) {
+    public ResponseEntity<?> saveMailStatus(MailStatus mailStatus) {
         try {
-            return mailStatusRepository.save(mailStatus);
+            MailStatus savedStatus = mailStatusRepository.save(mailStatus);
+            return new ResponseEntity<>(responseUtil.successResponse("Save mail success",String.valueOf(savedStatus)),HttpStatus.CREATED);
         } catch (Exception e) {
-            log.error("Exception while adding mail status {}", e);
-        }
-        return null;
-    }
-    public Map<String, ?> readFile(MultipartFile file, String colWithEmails) {
-        if (file.getOriginalFilename().contains(".csv")) {
-            return readFromCsv(file, colWithEmails);
-        } else if (file.getOriginalFilename().contains(".xls")) {
-            return readFromExcel(file, colWithEmails);
-        } else {
-            Map<String, String> err = new HashMap<>();
-            err.put("ERROR", "Please upload either CSV or Excel file");
-            return err;
+            log.error("Exception while adding mail status", e);
+            return new ResponseEntity<>(responseUtil.internalServerErrorResponse("Exception while adding mail status"),HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    private Map<String, List<String>> readFromCsv(MultipartFile file, String colWithEmails) {
+
+
+
+    public ResponseEntity<?> readFile(MultipartFile file, String colWithEmails) {
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().body("File is empty or null");
+        }
+
+        String fileName = file.getOriginalFilename();
+        try {
+            if (fileName != null && fileName.endsWith(".csv")) {
+                return readFromCsv(file, colWithEmails);
+            } else if (fileName != null && (fileName.endsWith(".xls") || fileName.endsWith(".xlsx"))) {
+                return readFromExcel(file, colWithEmails);
+            } else {
+                return  new ResponseEntity<>(responseUtil.badRequestResponse("Unsupported file format. Please upload CSV or Excel file."),HttpStatus.BAD_REQUEST);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>(responseUtil.internalServerErrorResponse("Exception occurred while processing file:"),HttpStatus.INTERNAL_SERVER_ERROR);
+
+        }
+    }
+
+
+    private ResponseEntity<?> readFromCsv(MultipartFile file, String colWithEmails) {
         try {
             Map<String, List<String>> result = new HashMap<>();
             List<String> listOfEmailId = new ArrayList<>();
@@ -330,13 +301,15 @@ public class MailService {
             }
             parser.close();
             result.put("EMAILS", listOfEmailId);
-            return result;
+            return new ResponseEntity<>(responseUtil.successResponse("Read from CSV",String.valueOf(listOfEmailId)),HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Exception while reading from the csv file {}", e);
+            String errorMessage = "Exception while reading from the CSV file: " + e.getMessage();
+            log.error(errorMessage);
+            return new ResponseEntity<>(responseUtil.internalServerErrorResponse("Exception while reading from the CSV file"),HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return Collections.EMPTY_MAP;
+
     }
-    private Map<String, List<String>> readFromExcel(MultipartFile file, String colWithEmails) {
+    private ResponseEntity<?> readFromExcel(MultipartFile file, String colWithEmails) {
         try {
             Map<String, List<String>> result = new HashMap<>();
             List<String> listOfEmailId = new ArrayList<>();
@@ -360,11 +333,12 @@ public class MailService {
                 }
             }
             result.put("EMAILS", listOfEmailId);
-            return result;
+            return new ResponseEntity<>(responseUtil.successResponse("Read from Excel",String.valueOf(listOfEmailId)),HttpStatus.OK);
         } catch (Exception e) {
             log.error("exception {}", e);
+            return new ResponseEntity<>(responseUtil.internalServerErrorResponse("Exception while reading from the CSV file"),HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return Collections.EMPTY_MAP;
+
     }
     private String getCellValue(Cell cell) {
         try {
@@ -374,23 +348,44 @@ public class MailService {
             return "";
         }
     }
-    public Object addUnsubscribedMail(UnsubscribedMails unsubscribedMail) {
+    public ResponseEntity<?> addUnsubscribedMail(UnsubscribedMails unsubscribedMail) {
+        String emailId = unsubscribedMail.getEmailId();
+        String decodedEmailId = new String(Base64.getDecoder().decode(emailId), StandardCharsets.UTF_8);
+        Optional<UnsubscribedMails> mailObj;
         try {
-            String emailId = unsubscribedMail.getEmailId();
-            String decodedEmailId = new String(Base64.getDecoder().decode(emailId), StandardCharsets.UTF_8);
-            Optional<UnsubscribedMails> mailObj = unsubscribedMailRepository.findByEmailId(decodedEmailId);
+            mailObj = unsubscribedMailRepository.findByEmailId(decodedEmailId);
             if (mailObj.isPresent()) {
                 log.error("Email ID {} has already been unsubscribed.", decodedEmailId);
-                return new ResponseEntity<>(commonUtils.message(HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Email ID has already been unsubscribed to support@wuelev8.tech"), HttpStatus.INTERNAL_SERVER_ERROR);
+                return new ResponseEntity<>(responseUtil.internalServerErrorResponse("Email ID has already been unsubscribed to support@bmj.co.in"),HttpStatus.INTERNAL_SERVER_ERROR) ;
             } else {
                 unsubscribedMail.setEmailId(decodedEmailId);
-                return unsubscribedMailRepository.save(unsubscribedMail);
+                UnsubscribedMails savedMail = unsubscribedMailRepository.save(unsubscribedMail);
+                return new ResponseEntity<>(responseUtil.successResponse("Successfully Added", null), HttpStatus.CREATED);
+
             }
         } catch (Exception e) {
-            log.error("Error occurred while adding unsubscribed mail: {}", e);
-            return new ResponseEntity<>(commonUtils.message(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Exception while adding the unsubscribed mail"), HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Exception occurred while adding unsubscribed mail: {}", e.getMessage());
+            return  new ResponseEntity<>(responseUtil.internalServerErrorResponse("Exception occurred while adding unsubscribed mail"),HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
+    public ResponseEntity<?> uploadFileToS3(MultipartFile file) {
+
+        try{
+            String key = "uploads/" + new Date().getTime() + "-" + Objects.requireNonNull(file.getOriginalFilename()).replaceAll("[^A-Za-z0-9]+", "-").replaceAll("\\s","-");
+
+            s3Client.putObject(new PutObjectRequest(bucketName, key, file.getInputStream(), null));
+            // Upload file to S3 bucket
+            log.info("File uploaded to S3 with key: {}", key);
+
+            return new ResponseEntity<>(responseUtil.successResponse("Successfully Upload to S3",String.valueOf(s3Client.getUrl(bucketName, key))), HttpStatus.OK);
+        }
+        catch(Exception e){
+            log.error("Error occured while upload on s3 file:{}",e.getMessage());
+            return new ResponseEntity<>(responseUtil.internalServerErrorResponse("Error occured while upload on s3 file"),HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
 }

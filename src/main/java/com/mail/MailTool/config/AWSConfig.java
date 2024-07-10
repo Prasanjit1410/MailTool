@@ -11,6 +11,7 @@ import com.mail.MailTool.util.ses.SESClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 @Configuration
 public class AWSConfig {
@@ -52,5 +53,6 @@ public class AWSConfig {
                 .build();
         return s3Client;
     }
+
 
 }

@@ -35,32 +35,27 @@ public class MailController {
 
     @PostMapping("/api/v1/mails/status")
     public ResponseEntity<?> addStatusOfAMailToAReceiver(
-            @RequestBody MailStatus mailStatus,
-            HttpServletRequest request) {
-        return new ResponseEntity<>(mailService.saveMailStatus(mailStatus), HttpStatus.OK);
-    }
-    @PostMapping(value = "api/v1/mails/readFromFile", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<?> register(
-            @RequestParam(name = "file") MultipartFile file,
-            javax.servlet.http.HttpServletRequest request) {
-        try {
-            return new ResponseEntity<Map<String, ?>>(mailService.readFile(file, "emails"), HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>("{\"Error\":\"Please fill in correct details.\"}",
-                    HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-    @PostMapping("/api/v1/mails/saveunsubscribemail")
-    public ResponseEntity<Object> addUnsubscribedMail(@RequestBody UnsubscribedMails unsubscribedMail) {
-        try {
-            Object addedMail = mailService.addUnsubscribedMail(unsubscribedMail);
-            return new ResponseEntity<>(addedMail, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(commonUtils.message(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Exception while adding unsubscribed mail to support@wuelev8.tech"), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+            @RequestBody MailStatus mailStatus)
+            {
+        return mailService.saveMailStatus(mailStatus);
     }
 
+    @PostMapping(value = "api/v1/mails/readFromFile", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<?> register(
+            @RequestParam(name = "file") MultipartFile file) {
+            return mailService.readFile(file, "emails");
+    }
+
+    @PostMapping("/api/v1/mails/saveunsubscribemail")
+    public ResponseEntity<?> addUnsubscribedMailController(@RequestBody UnsubscribedMails unsubscribedMail) {
+        return mailService.addUnsubscribedMail(unsubscribedMail);
+    }
+
+
+    @PostMapping("/api/v1/upload")
+    public ResponseEntity<?> uploadFileToS3(@RequestPart(value = "file") MultipartFile file) {
+      return  mailService.uploadFileToS3(file);
+    }
 
     @DeleteMapping("/api/v1/mails/bulk/cancel/scheduled/{campaignId}")
     public ResponseEntity<?> cancelScheduledBulkMailRequest(@PathVariable String campaignId) {
