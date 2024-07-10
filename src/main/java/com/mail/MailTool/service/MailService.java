@@ -10,7 +10,6 @@ import com.mail.MailTool.util.CommonUtils;
 import com.mail.MailTool.util.InternityUser;
 import com.mail.MailTool.util.SendMessageUtils;
 import com.mail.MailTool.util.drill.ResponseUtil;
-import com.mail.MailTool.util.drill.SendCustomMailUtils;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -21,14 +20,12 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.time.Instant;
@@ -45,8 +42,7 @@ public class MailService {
 
 
 
-    @Autowired
-    SendCustomMailUtils sendCustomMailUtils;
+
 
     @Autowired
     SendMessageUtils messageUtils;
@@ -172,38 +168,38 @@ public class MailService {
         }
     }
 
-    public Map<String, Object> filterCampaigns(String campaignId, String startDate, String endDate) {
-        try {
-            Map<String, Object> response = new HashMap<>();
-            List<BulkMailAttempt> campaigns;
-
-            if (campaignId.equals("NA") && startDate.equals("NA") && endDate.equals("NA")) {
-                log.info("Filtering campaigns - No filtering parameters provided. Returning all campaigns.");
-                campaigns = bulkMailAttemptRepository.findAll();
-            } else if (!campaignId.equals("NA") && startDate.equals("NA") && endDate.equals("NA")) {
-                log.info("Filtering campaigns - Campaign ID: {}", campaignId);
-                campaigns = bulkMailAttemptRepository.findAllByCampaignId(campaignId);
-            } else if (!startDate.equals("NA") && !endDate.equals("NA")) {
-                log.info("Filtering campaigns - Start Date: {}, End Date: {}", startDate, endDate);
-                campaigns = filterByDate(startDate, endDate);
-            } else {
-                log.error("Invalid parameters provided.");
-                throw new IllegalArgumentException("Invalid parameters provided.");
-            }
-
-            List<BulkMailAttempt> campaignListParent = campaigns.stream().distinct().collect(Collectors.toList());
-            List<BulkMailAttempt> campaignList = setCountOfSuccessfulMailsSent(campaignListParent);
-            List<MailStatus> allCampaign = mailStatusRepository.findAll();
-
-            response.put("totalRecords", campaignList.size());
-            response.put("data", campaignList);
-            response.put("AllList", allCampaign);
-            return response;
-        } catch (Exception e) {
-            log.error("Exception while filtering campaigns: {}", e);
-            return null;
-        }
-    }
+//    public Map<String, Object> filterCampaigns(String campaignId, String startDate, String endDate) {
+//        try {
+//            Map<String, Object> response = new HashMap<>();
+//            List<BulkMailAttempt> campaigns;
+//
+//            if (campaignId.equals("NA") && startDate.equals("NA") && endDate.equals("NA")) {
+//                log.info("Filtering campaigns - No filtering parameters provided. Returning all campaigns.");
+//                campaigns = bulkMailAttemptRepository.findAll();
+//            } else if (!campaignId.equals("NA") && startDate.equals("NA") && endDate.equals("NA")) {
+//                log.info("Filtering campaigns - Campaign ID: {}", campaignId);
+//                campaigns = bulkMailAttemptRepository.findAllByCampaignId(campaignId);
+//            } else if (!startDate.equals("NA") && !endDate.equals("NA")) {
+//                log.info("Filtering campaigns - Start Date: {}, End Date: {}", startDate, endDate);
+//                campaigns = filterByDate(startDate, endDate);
+//            } else {
+//                log.error("Invalid parameters provided.");
+//                throw new IllegalArgumentException("Invalid parameters provided.");
+//            }
+//
+//            List<BulkMailAttempt> campaignListParent = campaigns.stream().distinct().collect(Collectors.toList());
+//            List<BulkMailAttempt> campaignList = setCountOfSuccessfulMailsSent(campaignListParent);
+//            List<MailStatus> allCampaign = mailStatusRepository.findAll();
+//
+//            response.put("totalRecords", campaignList.size());
+//            response.put("data", campaignList);
+//            response.put("AllList", allCampaign);
+//            return response;
+//        } catch (Exception e) {
+//            log.error("Exception while filtering campaigns: {}", e);
+//            return null;
+//        }
+//    }
     public ResponseEntity<?> searchBulkMails(String campaignId, String startDate, String endDate, String uId, String platform, int offset, int limit, String order, SearchProfile profile, InternityUser internityUser, boolean isMailSent, boolean isScheduled, boolean isCancelled) {
         try {
             log.info("Searching bulk mails with campaignId: {}, startDate: {}, endDate: {}, uId: {}, platform: {}, offset: {}, limit: {}, order: {}, profile: {}",
@@ -278,5 +274,13 @@ public class MailService {
             log.error("Exception while setting count of successful mails sent ::: {}", e.getMessage());
             return campaignListParent; // Consider what to return in case of exception
         }
+    }
+    public MailStatus saveMailStatus(MailStatus mailStatus) {
+        try {
+            return mailStatusRepository.save(mailStatus);
+        } catch (Exception e) {
+            log.error("Exception while adding mail status {}", e);
+        }
+        return null;
     }
 }

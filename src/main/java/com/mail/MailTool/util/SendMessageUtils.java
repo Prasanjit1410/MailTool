@@ -53,7 +53,7 @@ public class SendMessageUtils {
     public final static Logger LOGGER = LoggerFactory.getLogger(SendMessageUtils.class);
 
 
-    private static final String UNSUBSCRIBE_BASE_URL = "https://wuelev8.tech/";
+
 
     @Autowired
     private TemplateEngine templateEngine;
@@ -94,96 +94,8 @@ public class SendMessageUtils {
     @Value("${config_set:configset}")
     private String configSet;
 
-    @Async
-    public String sendMail(String to, MailContent emailContent) throws MessagingException {
-        try {
-            log.debug("Send mail config {} ::: {}", awsConfig, emailContent.getTemplateName());
-            Context context = new Context();
-            context.setVariable("content", emailContent);
-            String process = templateEngine.process(emailContent.getTemplateName(), context);
-            String data = process.replaceAll("&lt;", "<").replaceAll("&amp;", "&").replaceAll("&gt;", ">");
-
-            //SENDING EMAIL VIA SES
-            SESMailMessage sesEmailMessage = new SESMailMessage();
-            sesEmailMessage.setTo(to);
-            sesEmailMessage.setBody(data);
-            sesEmailMessage.setSubject(emailContent.getSubject());
-            if(!StringUtils.isEmpty(emailContent.getBcc())){
-                sesEmailMessage.setBcc(emailContent.getBcc());
-            }
-            if(!StringUtils.isEmpty(emailContent.getCc())){
-                sesEmailMessage.setCc(emailContent.getCc());
-            }
-            awsConfig.build().sendEmail(sesEmailMessage);
-            return "Sent";
-        }
-        catch (Exception e) {
-            log.error("exception {}", e);
-        }
-        return "sent";
-    }
-    public String sendMailWithCustomHeader(MailContent emailContent, String to, String headerValue, String headerName) {
-        try {
-            log.debug("Send mail config {} ::: {}", awsConfig, emailContent.getTemplateName());
-            Context context = new Context();
-            context.setVariable("content", emailContent);
-            String process = templateEngine.process(emailContent.getTemplateName(), context);
-            String data = process.replaceAll("&lt;", "<").replaceAll("&amp;", "&").replaceAll("&gt;", ">");
-
-            MimeBodyPart bodyPart = new MimeBodyPart();
-            bodyPart.setContent(data, "text/html");
 
 
-            Properties props = System.getProperties();
-            Session session = Session.getDefaultInstance(props, null);
-            MimeMessage message = new MimeMessage(session);
-            message.addHeader(headerName, headerValue);
-            // Set the content of the message
-            message.setSubject(emailContent.getSubject());
-
-            // Create the message body
-            MimeMultipart multipart = new MimeMultipart();
-
-            // Add the text message part
-            MimeBodyPart textPart = new MimeBodyPart();
-            textPart.setContent(emailContent.getMessage(), "text/html");
-            multipart.addBodyPart(textPart);
-
-            // Add the email body part to the multipart
-            multipart.addBodyPart(bodyPart);
-
-            if (emailContent.getCc() != null) {
-                String cc = emailContent.getCc().toString();
-                if (isValidEmail(cc)) {
-                    message.setRecipients(MimeMessage.RecipientType.CC, InternetAddress.parse(cc));
-                }
-            }
-            if (emailContent.getBcc() != null) {
-                String bcc = emailContent.getBcc().toString();
-                if (isValidEmail(bcc)) {
-                    message.setRecipients(MimeMessage.RecipientType.BCC, InternetAddress.parse(bcc));
-                }
-            }
-
-            // Encode the message as a Base64 string
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            message.writeTo(outputStream);
-            byte[] rawEmail = outputStream.toByteArray();
-            String newEncodedEmails = Base64.getEncoder().encodeToString(rawEmail);
-
-            SendRawEmailRequest request = new SendRawEmailRequest()
-                    .withSource(fromEmail)
-                    .withDestinations(to)
-                    .withConfigurationSetName(configSet)
-                    .withRawMessage(new RawMessage().withData(ByteBuffer.wrap(Base64.getMimeDecoder().decode(newEncodedEmails))));
-
-
-            SendRawEmailResult result = awsConfig.credentials().sendRawEmail(request);
-            return ("Email sent to " + to);
-        } catch (Exception ex) {
-            return ("The email was not sent. Error message: " + ex.getMessage());
-        }
-    }
     public static boolean isValidEmail(String email) {
         String regex = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$";
         return email.matches(regex);
@@ -440,35 +352,7 @@ public class SendMessageUtils {
         return false;
     }
 
-    public Object sendMailWithUnsubscribeLink(MailContent emailContent, String to) {
-        try {
-            log.debug("Send mail config {} ::: {}", awsConfig, emailContent.getTemplateName());
-            String encodedEmail = Base64.getEncoder().encodeToString(to.getBytes());
-            String unsubscribeLink = (domainUrl+"/unsubscribe?id="+encodedEmail);
-            emailContent.setUnsubscribeLink(unsubscribeLink);
-            Context context = new Context();
-            context.setVariable("content", emailContent);
-            String process = templateEngine.process(emailContent.getTemplateName(), context);
-            String data = process.replaceAll("&lt;", "<").replaceAll("&amp;", "&").replaceAll("&gt;", ">");
 
-            // Sending email via SES
-            SESMailMessage sesEmailMessage = new SESMailMessage();
-            sesEmailMessage.setTo(to);
-            sesEmailMessage.setBody(data);
-            sesEmailMessage.setSubject(emailContent.getSubject());
-            if (!StringUtils.isEmpty(emailContent.getBcc())) {
-                sesEmailMessage.setBcc(emailContent.getBcc());
-            }
-            if (!StringUtils.isEmpty(emailContent.getCc())) {
-                sesEmailMessage.setCc(emailContent.getCc());
-            }
-            awsConfig.build().sendEmail(sesEmailMessage);
-            return "Sent";
-        } catch (Exception e) {
-            log.error("exception {}", e);
-        }
-        return "sent";
-    }
 
 
 
