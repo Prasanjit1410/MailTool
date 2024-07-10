@@ -1,12 +1,10 @@
 package com.mail.MailTool.dto.mail;
 
-import com.mail.MailTool.model.MailContent;
+import com.mail.MailTool.dto.MailContent;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
 

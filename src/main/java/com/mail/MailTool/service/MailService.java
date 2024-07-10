@@ -7,13 +7,12 @@ import com.mail.MailTool.custom.specification.SearchBulkMailsCriteria;
 import com.mail.MailTool.domain.mail.*;
 import com.mail.MailTool.dto.mail.BulkMailRequestDto;
 import com.mail.MailTool.dto.search.BulkMailAttemptSpecification;
-import com.mail.MailTool.model.MailContent;
+import com.mail.MailTool.dto.MailContent;
 import com.mail.MailTool.repository.mail.*;
 import com.mail.MailTool.util.CommonUtils;
 import com.mail.MailTool.util.InternityUser;
 import com.mail.MailTool.util.SendMessageUtils;
-import com.mail.MailTool.util.drill.ResponseUtil;
-import jakarta.persistence.EntityManager;
+import com.mail.MailTool.util.ResponseUtil;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -86,13 +85,6 @@ public class MailService {
 
     EmailValidator emailValidator = EmailValidator.getInstance();
 
-    private EntityManager entityManager;
-
-    public MailService(EntityManager entityManager) {
-        this.entityManager = entityManager;
-    }
-
-
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final Map<String, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 
@@ -152,7 +144,6 @@ public class MailService {
             return new ResponseEntity<>(responseUtil.internalServerErrorResponse("Exception while sending bulk mail"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 
     private long calculateInitialDelay(Date scheduledDate) {
         log.info("Scheduled time: {}", scheduledDate);
@@ -214,20 +205,17 @@ public class MailService {
         }
     }
 
-
     private List<BulkMailAttempt> setCountOfSuccessfulMailsSent(List<BulkMailAttempt> campaignListParent) {
         try {
             if (campaignListParent == null || campaignListParent.isEmpty()) {
                 return campaignListParent; // No processing needed for empty list
             }
-
             List<String> campaignWithSuccessfulMailSent = new ArrayList<>();
             for (BulkMailAttempt mailAttempt : campaignListParent) {
                 if (StringUtils.isNoneBlank(mailAttempt.getCampaignId())) {
                     campaignWithSuccessfulMailSent.add(mailAttempt.getCampaignId());
                 }
             }
-
             List<SentMailStats> sentMailStatsList = sentMailStatsRepository.findByMailCampaignIdIn(campaignWithSuccessfulMailSent);
             Map<String, SentMailStats> sentMailStatsMap = sentMailStatsList.stream()
                     .filter(stats -> StringUtils.isNoneBlank(stats.getMailCampaignId()))
@@ -256,8 +244,6 @@ public class MailService {
         }
     }
 
-
-
     public ResponseEntity<?> readFile(MultipartFile file, String colWithEmails) {
         if (file == null || file.isEmpty()) {
             return ResponseEntity.badRequest().body("File is empty or null");
@@ -277,7 +263,6 @@ public class MailService {
 
         }
     }
-
 
     private ResponseEntity<?> readFromCsv(MultipartFile file, String colWithEmails) {
         try {

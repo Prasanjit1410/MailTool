@@ -25,7 +25,7 @@ public class MailController {
     private MailService mailService;
     @Autowired
     CommonUtils commonUtils;
-    @PostMapping("/api/v1/mails/bulk")
+    @PostMapping("/api/mails/bulk")
     public ResponseEntity<?> sendMailToBulkUsersV1(
             @RequestBody BulkMailRequestDto payload,
             @RequestParam(defaultValue = "NA", required = false) String uId,
@@ -36,14 +36,14 @@ public class MailController {
     @PostMapping("/api/v1/mails/status")
     public ResponseEntity<?> addStatusOfAMailToAReceiver(
             @RequestBody MailStatus mailStatus)
-            {
+    {
         return mailService.saveMailStatus(mailStatus);
     }
 
     @PostMapping(value = "api/v1/mails/readFromFile", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<?> register(
             @RequestParam(name = "file") MultipartFile file) {
-            return mailService.readFile(file, "emails");
+        return mailService.readFile(file, "emails");
     }
 
     @PostMapping("/api/v1/mails/saveunsubscribemail")
@@ -52,9 +52,9 @@ public class MailController {
     }
 
 
-    @PostMapping("/api/v1/upload")
+    @PostMapping("/api/v1/mails/uploadfile")
     public ResponseEntity<?> uploadFileToS3(@RequestPart(value = "file") MultipartFile file) {
-      return  mailService.uploadFileToS3(file);
+        return  mailService.uploadFileToS3(file);
     }
 
     @DeleteMapping("/api/v1/mails/bulk/cancel/scheduled/{campaignId}")
@@ -62,7 +62,7 @@ public class MailController {
         return mailService.cancelScheduledBulkMailRequest(campaignId);
     }
 
-    @GetMapping("/api/v1/mails/bulk/search")
+    @GetMapping("/api/v1/mails/search")
     public ResponseEntity<?> searchBulkMails(
             @RequestParam(defaultValue = "NA", required = false) String campaignId,
             @RequestParam(defaultValue = "NA", required = false) String startDate,

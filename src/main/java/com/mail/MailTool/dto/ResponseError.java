@@ -1,4 +1,4 @@
-package com.mail.MailTool.domain;
+package com.mail.MailTool.dto;
 
 
 

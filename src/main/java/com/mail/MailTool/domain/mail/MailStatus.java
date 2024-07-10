@@ -49,4 +49,3 @@ public class MailStatus {
     private Date createdts;
 
 }
-

@@ -1,4 +1,4 @@
-package com.mail.MailTool.model;
+package com.mail.MailTool.dto;
 
 
 import lombok.AllArgsConstructor;
@@ -31,4 +31,3 @@ public class MailContent {
 
 
 }
-

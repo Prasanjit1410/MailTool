@@ -88,4 +88,3 @@ public class BulkMailAttempt {
     @Transient
     private SentMailStats sentMailStatsDetails;
 }
-

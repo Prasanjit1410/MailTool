@@ -18,7 +18,6 @@ import com.mail.MailTool.repository.mail.*;
 import jakarta.activation.DataHandler;
 import jakarta.activation.DataSource;
 import jakarta.activation.FileDataSource;
-import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeBodyPart;
@@ -43,8 +42,7 @@ import org.thymeleaf.context.Context;
 
 
 import com.mail.MailTool.config.AWSConfig;
-import com.mail.MailTool.model.MailContent;
-import com.mail.MailTool.util.ses.SESMailMessage;
+import com.mail.MailTool.dto.MailContent;
 import lombok.extern.log4j.Log4j2;
 
 @Component
@@ -78,13 +76,13 @@ public class SendMessageUtils {
     @Autowired
     BulkMailAttemptRepository bulkMailAttemptRepository;
 
-    @Value("${FROM_EMAIL:no-reply@bookmyjet.co.in}")
+    @Value("${FROM_EMAIL}")
     private String fromEmail;
 
-    @Value("${DISPLAY_NAME:Bookmyjet Team}")
+    @Value("${DISPLAY_NAME}")
     private String displayName;
 
-    @Value("${REPLYTO_EMAIL:care@bookmyjet.co.in}")
+    @Value("${REPLYTO_EMAIL}")
     private String replyToEmail;
 
     @Value("${domain.url:}")
@@ -105,12 +103,10 @@ public class SendMessageUtils {
             log.info("Send mail config {} ::: {}", awsConfig, emailContent, emailContent.getTemplateName());
             Context context = new Context();
             List<String> validEmails = new ArrayList<>();
-            String senderEmail = "";
-            String senderDisplayName = "";
-            String senderReplyToEmail = "";
+
             List<String> unsubscribedEmails = unsubscribedMailsRepository.findAll().stream()
                     .map(UnsubscribedMails::getEmailId)
-                    .collect(Collectors.toList());
+                    .toList();
 
             List<String> blockedBouncedEmails = mailStatusRepository.findByStatus("Bounce").stream()
                     .map(MailStatus::getReceiverEmail)
@@ -129,28 +125,11 @@ public class SendMessageUtils {
             if (emailContent.getCustomerDetails() != null) {
                 customerDetails.putAll(emailContent.getCustomerDetails());
 
-                if (!StringUtils.isEmpty(customerDetails.get("from"))) {
-                    senderEmail = customerDetails.get("from");
-                }
-
-                if (!StringUtils.isEmpty(customerDetails.get("displayName"))) {
-                    senderDisplayName = customerDetails.get("displayName");
-                }
-
-                senderReplyToEmail = senderEmail;
-                emailContent.setTemplateName("GenericMailForCustomers");
                 JSONObject socialLinks = new JSONObject(customerDetails.get("socialLinks"));
                 setSocialLinks(emailContent, socialLinks);
 
                 log.info("from email ::: {} ::: {}", fromEmail);
-            } else {
-                senderEmail = fromEmail;
-                senderDisplayName = displayName;
-                senderReplyToEmail = replyToEmail;
             }
-
-            log.info("Sender email ::: {} ::: sender display name ::: {} ::: reply to email ::: {}",
-                    senderEmail, senderDisplayName, senderReplyToEmail);
 
             List<String> emailSuccessfullySent = new ArrayList<>();
             List<String> blockedEmail = new ArrayList<>();
@@ -169,15 +148,13 @@ public class SendMessageUtils {
                         continue;
                     }
 
-
-
                     String encodedEmail = Base64.getEncoder().encodeToString(email.trim().getBytes());
                     String unsubscribeLink = domainUrl + "/unsubscribe?id=" + encodedEmail;
                     log.debug("unsubscribe link for email {} ::: {}", email, unsubscribeLink);
                     emailContent.setUnsubscribeLink(unsubscribeLink);
                     context.setVariable("content", emailContent);
                     String process = templateEngine.process(emailContent.getTemplateName(), context);
-                    //String data = process.replaceAll("&lt;", "<").replaceAll("&amp;", "&").replaceAll("&gt;", ">");
+
                     MimeBodyPart bodyPart = new MimeBodyPart();
                     bodyPart.setContent(process, "text/html; charset=UTF-8");
 
@@ -190,7 +167,7 @@ public class SendMessageUtils {
                     MimeMultipart multipart = new MimeMultipart();
                     multipart.addBodyPart(bodyPart);
 
-                    if (attachmentPaths!=null && !attachmentPaths.isEmpty()) {
+                    if (attachmentPaths != null && !attachmentPaths.isEmpty()) {
                         log.info("attachment paths not empty ::: {}", attachmentPaths);
                         for (String attachmentPath : attachmentPaths) {
                             MimeBodyPart attachmentPart = new MimeBodyPart();
@@ -205,8 +182,6 @@ public class SendMessageUtils {
                                 log.info("bucket name ::: {}", bucketName);
 
                                 String key = getS3Key(parts);
-
-
 
                                 log.info("key ::: {}", key);
                                 S3Object s3Object = awsConfig.s3client().getObject(new GetObjectRequest(bucketName, key));
@@ -225,17 +200,50 @@ public class SendMessageUtils {
                     }
                     message.setContent(multipart);
 
-                    if (emailContent.getCc() != null && isValidEmail(emailContent.getCc().toString())) {
-                        message.setRecipients(MimeMessage.RecipientType.CC, InternetAddress.parse(emailContent.getCc().toString()));
+                    if (emailContent.getCc() != null && !emailContent.getCc().isEmpty()) {
+                        String[] ccEmails = emailContent.getCc().split(",");
+
+                        InternetAddress[] ccAddresses = new InternetAddress[ccEmails.length];
+                        for (int i = 0; i < ccEmails.length; i++) {
+                            String ccEmail = ccEmails[i].trim();
+                            if (isValidEmail(ccEmail)) {
+                                try {
+                                    ccAddresses[i] = new InternetAddress(ccEmail);
+                                } catch (jakarta.mail.internet.AddressException e) {
+                                    log.warn("Invalid CC email: {}", ccEmail);
+                                }
+                            } else {
+                                log.warn("Invalid CC email format: {}", ccEmail);
+                            }
+                        }
+
+                        message.setRecipients(MimeMessage.RecipientType.CC, ccAddresses);
                     }
 
-                    if (emailContent.getBcc() != null && isValidEmail(emailContent.getBcc().toString())) {
-                        message.setRecipients(MimeMessage.RecipientType.BCC, InternetAddress.parse(emailContent.getBcc().toString()));
+                    if (emailContent.getBcc() != null && !emailContent.getBcc().isEmpty()) {
+                        String[] bccEmails = emailContent.getBcc().split(",");
+
+                        InternetAddress[] bccAddresses = new InternetAddress[bccEmails.length];
+                        for (int i = 0; i < bccEmails.length; i++) {
+                            String bccEmail = bccEmails[i].trim();
+                            if (isValidEmail(bccEmail)) {
+                                try {
+                                    bccAddresses[i] = new InternetAddress(bccEmail);
+                                } catch (jakarta.mail.internet.AddressException e) {
+                                    log.warn("Invalid BCC email: {}", bccEmail);
+                                }
+                            } else {
+                                log.warn("Invalid BCC email format: {}", bccEmail);
+                            }
+                        }
+
+                        message.setRecipients(MimeMessage.RecipientType.BCC, bccAddresses);
                     }
 
-                    message.setFrom(new InternetAddress(senderEmail, senderDisplayName));
+
+                    message.setFrom(new InternetAddress(fromEmail, displayName));
                     message.setReplyTo(new jakarta.mail.Address[]{
-                            new jakarta.mail.internet.InternetAddress(senderReplyToEmail)
+                            new jakarta.mail.internet.InternetAddress(replyToEmail)
                     });
 
                     try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
@@ -253,8 +261,7 @@ public class SendMessageUtils {
                         log.info("Mail sent to " + email);
 
                     }
-                }
-                catch (Exception e){
+                } catch (Exception e){
                     log.error("Exception while sending email ::: {} ::: {}", e, email);
                     blockedEmail.add("[ERR]"+email);
                     continue;
@@ -268,8 +275,7 @@ public class SendMessageUtils {
                 sentMailStats.setSentEmailNumb(emailSuccessfullySent.size());
                 sentMailStats.setBlockedEmailNumb(blockedEmail.size());
                 sentMailStatsRepository.save(sentMailStats);
-            }
-            catch (Exception ex){
+            } catch (Exception ex){
                 log.error("Exception while saving mail stats ::: {}", ex);
                 return CompletableFuture.completedFuture("The email was not sent. Error message: " + ex.getMessage());
             }
@@ -283,6 +289,7 @@ public class SendMessageUtils {
             return CompletableFuture.completedFuture("The email was not sent. Error message: " + ex.getMessage());
         }
     }
+
     private String replaceTemplateWithInlineCss(String process) {
         try {
             return
@@ -304,9 +311,7 @@ public class SendMessageUtils {
         for(int i=0;i<parts.length;i++){
             if(parts[i].endsWith("amazonaws.com")){
                 index=i;
-
             }
-
         }
         if(index== parts.length-2){
             return parts[parts.length-1];
@@ -315,7 +320,7 @@ public class SendMessageUtils {
         for(int i=index+1;i<parts.length;i++){
 
             if(i!=parts.length-1){
-               key+= parts[i]+"/";
+                key+= parts[i]+"/";
             }
             else{
                 key+=parts[i];
@@ -385,4 +390,3 @@ public class SendMessageUtils {
 
 
 }
-

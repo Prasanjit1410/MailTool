@@ -56,4 +56,3 @@ public class SentMailStats {
     @UpdateTimestamp
     private Date updatedts;
 }
-

@@ -1,10 +1,10 @@
-package com.mail.MailTool.util.drill;
+package com.mail.MailTool.util;
 
 
 
 
-import com.mail.MailTool.domain.Response;
-import com.mail.MailTool.domain.ResponseError;
+import com.mail.MailTool.dto.Response;
+import com.mail.MailTool.dto.ResponseError;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -44,4 +44,3 @@ public class ResponseUtil {
 
 
 }
-
